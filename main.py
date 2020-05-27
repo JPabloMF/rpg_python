@@ -12,7 +12,7 @@ bcolors = {'HEADER': '\033[95m',
            'UNDERLINE': '\033[4m'}
 
 axis = {"x": 0, "y": 0}
-axis_limits = {"x": 9, "y": 9}
+axis_limits = {"x": 49, "y": 9}
 
 lives = 3
 stamina = 3
@@ -35,7 +35,7 @@ def generate_procedural_map():
     mock_list = []
     for x in range(10):
         mock_list.append(random.choices(
-            objects_list, weights=[15, 8, 1, 1], k=10))
+            objects_list, weights=[15, 8, 1, 1], k=50))
     mock_list[0][0] = object_charapter
     map = mock_list
 
@@ -55,22 +55,22 @@ def get_stamina():
 
 
 def move_charapter(key):
-    if key == "W":
+    if key == 119:
         if axis['y'] - 1 >= 0 and map[axis['y'] - 1][axis['x']]['block'] != True:
             map[axis['y']][axis['x']] = objects_list[0]
             axis['y'] = axis['y'] - 1
             map[axis['y']][axis['x']] = object_charapter
-    elif key == "S":
+    elif key == 115:
         if axis['y'] + 1 <= axis_limits['y'] and map[axis['y'] + 1][axis['x']]['block'] != True:
             map[axis['y']][axis['x']] = objects_list[0]
             axis['y'] = axis['y'] + 1
             map[axis['y']][axis['x']] = object_charapter
-    elif key == "A":
+    elif key == 97:
         if axis['x'] - 1 >= 0 and map[axis['y']][axis['x'] - 1]['block'] != True:
             map[axis['y']][axis['x']] = objects_list[0]
             axis['x'] = axis['x'] - 1
             map[axis['y']][axis['x']] = object_charapter
-    elif key == "D":
+    elif key == 100:
         if axis['x'] + 1 <= axis_limits['x'] and map[axis['y']][axis['x'] + 1]['block'] != True:
             map[axis['y']][axis['x']] = objects_list[0]
             axis['x'] = axis['x'] + 1
@@ -78,33 +78,31 @@ def move_charapter(key):
 
 
 def get_key_pressed(key):
-    key = key.upper()
-    if key == "W":
+    if key == 119:
         clear()
-        move_charapter("W")
+        move_charapter(119)
         get_interface()
-    elif key == "S":
+    elif key == 115:
         clear()
-        move_charapter("S")
+        move_charapter(115)
         get_interface()
-    elif key == "A":
+    elif key == 97:
         clear()
-        move_charapter("A")
+        move_charapter(97)
         get_interface()
-    elif key == "D":
+    elif key == 100:
         clear()
-        move_charapter("D")
+        move_charapter(100)
         get_interface()
 
 
 def get_inputs():
     input_value = ""
     while input_value != "0":
-        input_value = msvcrt.getch()
-        key_pressed = bytes.decode(input_value)
-        if key_pressed == "0":
+        input_value = ord(msvcrt.getch())
+        if input_value == 27:
             break
-        get_key_pressed(key=key_pressed)
+        get_key_pressed(key=input_value)
 
 
 def print_map():
@@ -125,7 +123,7 @@ def print_map():
 
 
 def get_interface():
-    print(bcolors["WARNING"]+"Press '0' to exit. continue?"+bcolors["ENDC"])
+    print(bcolors["WARNING"]+"Press 'ESC' to exit."+bcolors["ENDC"])
     print(
         f'Life {bcolors["FAIL"]+get_life()+bcolors["ENDC"]} Stamina {bcolors["OKBLUE"]+get_stamina()+bcolors["ENDC"]}')
     print_map()
