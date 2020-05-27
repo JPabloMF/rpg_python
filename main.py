@@ -1,54 +1,80 @@
+import random
 import msvcrt
 import os
 
-axis = {"x": 0, "y": 0}
+bcolors = {'HEADER': '\033[95m',
+           'OKBLUE': '\033[94m',
+           'OKGREEN': '\033[92m',
+           'WARNING': '\033[93m',
+           'FAIL': '\033[91m',
+           'ENDC': '\033[0m',
+           'BOLD': '\033[1m',
+           'UNDERLINE': '\033[4m'}
 
-map = [
-    [{"charapter": True, "content": "▣ "}, {"charapter": False,
-                                            "content": "░ "}, {"charapter": False, "content": "░ "}],
-    [{"charapter": False, "content": "░ "}, {"charapter": False,
-                                             "content": "░ "}, {"charapter": False, "content": "░ "}],
-    [{"charapter": False, "content": "░ "}, {"charapter": False,
-                                             "content": "░ "}, {"charapter": False, "content": "░ "}]
-]
+axis = {"x": 0, "y": 0}
+axis_limits = {"x": 9, "y": 9}
+
+lives = 3
+stamina = 3
+
+map = []
+
+objects_list = [{"block": False, "grass": True, "content": "░ "},
+                {"block": True, "tree": True, "content": "↟ "},
+                {"block": True, "rock": True, "content": "⎔ "},
+                {"block": False, "puddle": True, "content": "▓ "}]
+
+object_charapter = {"block": False, "content": "▣ "}
 
 
 def clear(): return os.system('cls')
 
 
+def generate_procedural_map():
+    global map
+    mock_list = []
+    for x in range(10):
+        mock_list.append(random.choices(
+            objects_list, weights=[15, 8, 1, 1], k=10))
+    mock_list[0][0] = object_charapter
+    map = mock_list
+
+
 def get_life():
-    lives = 3
     life_string = ""
     for x in range(lives):
         life_string += "▍"
-    print(f'Life {life_string}')
+    return life_string
 
 
-def get_mana():
-    mana = 3
-    mana_string = ""
-    for x in range(mana):
-        mana_string += "▍"
-    print(f'Mana {mana_string}')
+def get_stamina():
+    stamina_string = ""
+    for x in range(stamina):
+        stamina_string += "▍"
+    return stamina_string
 
 
 def move_charapter(key):
     if key == "W":
-        map[axis['y']][axis['x']]['content'] = '░ '
-        axis['y'] = axis['y'] - 1
-        map[axis['y']][axis['x']]['content'] = '▣ '
+        if axis['y'] - 1 >= 0 and map[axis['y'] - 1][axis['x']]['block'] != True:
+            map[axis['y']][axis['x']] = objects_list[0]
+            axis['y'] = axis['y'] - 1
+            map[axis['y']][axis['x']] = object_charapter
     elif key == "S":
-        map[axis['y']][axis['x']]['content'] = '░ '
-        axis['y'] = axis['y'] + 1
-        map[axis['y']][axis['x']]['content'] = '▣ '
+        if axis['y'] + 1 <= axis_limits['y'] and map[axis['y'] + 1][axis['x']]['block'] != True:
+            map[axis['y']][axis['x']] = objects_list[0]
+            axis['y'] = axis['y'] + 1
+            map[axis['y']][axis['x']] = object_charapter
     elif key == "A":
-        map[axis['y']][axis['x']]['content'] = '░ '
-        axis['x'] = axis['x'] - 1
-        map[axis['y']][axis['x']]['content'] = '▣ '
+        if axis['x'] - 1 >= 0 and map[axis['y']][axis['x'] - 1]['block'] != True:
+            map[axis['y']][axis['x']] = objects_list[0]
+            axis['x'] = axis['x'] - 1
+            map[axis['y']][axis['x']] = object_charapter
     elif key == "D":
-        map[axis['y']][axis['x']]['content'] = '░ '
-        axis['x'] = axis['x'] + 1
-        map[axis['y']][axis['x']]['content'] = '▣ '
+        if axis['x'] + 1 <= axis_limits['x'] and map[axis['y']][axis['x'] + 1]['block'] != True:
+            map[axis['y']][axis['x']] = objects_list[0]
+            axis['x'] = axis['x'] + 1
+            map[axis['y']][axis['x']] = object_charapter
 
 
 def get_key_pressed(key):
@@ -85,18 +111,27 @@ def print_map():
     test = ""
     for column in range(len(map)):
         test += "\n"
-        for row in range(len(map[column])):
-            test += map[column][row]['content']
+        for row in range(len(map[int(column)])):
+            if map[int(column)][int(row)]["content"] == "░ ":
+                test += bcolors["OKGREEN"] + \
+                    map[int(column)][int(row)]["content"]+bcolors["ENDC"]
+            elif map[int(column)][int(row)]["content"] == "▓ ":
+                test += bcolors["OKBLUE"] + \
+                    map[int(column)][int(row)]["content"]+bcolors["ENDC"]
+            else:
+                test += map[int(column)][int(row)]["content"]
 
     print(test)
 
 
 def get_interface():
-    print("Press '0' to exit.")
-    get_life()
-    get_mana()
+    print(bcolors["WARNING"]+"Press '0' to exit. continue?"+bcolors["ENDC"])
+    print(
+        f'Life {bcolors["FAIL"]+get_life()+bcolors["ENDC"]} Stamina {bcolors["OKBLUE"]+get_stamina()+bcolors["ENDC"]}')
     print_map()
 
 
+clear()
+generate_procedural_map()
 get_interface()
 get_inputs()
