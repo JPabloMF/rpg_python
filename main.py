@@ -1,6 +1,7 @@
 import random
 import msvcrt
 import os
+import copy
 
 bcolors = {'HEADER': '\033[95m',
            'OKBLUE': '\033[94m',
@@ -11,36 +12,38 @@ bcolors = {'HEADER': '\033[95m',
            'BOLD': '\033[1m',
            'UNDERLINE': '\033[4m'}
 
-axis = {"x": 0, "y": 0}
-axis_limits = {"x": 24, "y": 9}
-selected_axis = {"x": 0, "y": 0}
+axis = {"x": 9, "y": 9}
+axis_limits = {"x": 19, "y": 19}
 
 lives = 3
 stamina = 3
 
 near_objects = []
 
-map = []
+game_map = []
+game_map_copy = []
 
 objects_list = [{"block": False, "grass": True, "content": "░ "},
                 {"block": True, "tree": True, "content": "↟ "},
                 {"block": True, "rock": True, "content": "⎔ "},
                 {"block": False, "puddle": True, "content": "▓ "}]
 
-object_charapter = {"block": False, "content": "▣ "}
+object_charapter = {"block": False, "content": f"\x1b[0;37;43m▣ \x1b[0m"}
 
 
 def clear(): return os.system('cls')
 
 
 def generate_procedural_map():
-    global map
+    global game_map, game_map_copy
     mock_list = []
     for x in range(axis_limits['y']+1):
         mock_list.append(random.choices(
             objects_list, weights=[15, 8, 1, 1], k=axis_limits['x']+1))
-    mock_list[0][0] = object_charapter
-    map = mock_list
+    mock_list[9][9] = objects_list[0]
+    game_map_copy = copy.deepcopy(mock_list)
+    mock_list[9][9] = object_charapter
+    game_map = copy.deepcopy(mock_list)
 
 
 def get_life():
@@ -57,54 +60,68 @@ def get_stamina():
     return stamina_string
 
 
-def has_usable_objects_near(current_y,current_x):
+def has_usable_objects_near(current_y, current_x):
     global near_objects
     # UP - DOWN - LEFT - RIGHT
     near_objects = []
-    if current_y+1 + 1 <= axis_limits['y'] and map[current_y+1][current_x]['content'] == '↟ ':
-        near_objects.append(f'Chop tree {map[current_y+1][current_x]["content"]}')
+    if current_y+1 + 1 <= axis_limits['y'] and game_map[current_y+1][current_x]['content'] == '↟ ':
+        near_objects.append(
+            f'Chop tree {game_map[current_y+1][current_x]["content"]}')
 
-    if current_y-1 >= 0 and map[current_y-1][current_x]['content'] == '↟ ':
-        near_objects.append(f'Chop tree {map[current_y-1][current_x]["content"]}')
-    
-    if current_x+1 + 1 <= axis_limits['x'] and map[current_y][current_x+1]['content'] == '↟ ':
-        near_objects.append(f'Chop tree {map[current_y][current_x+1]["content"]}')
+    if current_y-1 >= 0 and game_map[current_y-1][current_x]['content'] == '↟ ':
+        near_objects.append(
+            f'Chop tree {game_map[current_y-1][current_x]["content"]}')
 
-    if current_x-1 >= 0 and map[current_y][current_x-1]['content'] == '↟ ':
-        near_objects.append(f'Chop tree {map[current_y][current_x-1]["content"]}')
+    if current_x+1 + 1 <= axis_limits['x'] and game_map[current_y][current_x+1]['content'] == '↟ ':
+        near_objects.append(
+            f'Chop tree {game_map[current_y][current_x+1]["content"]}')
+
+    if current_x-1 >= 0 and game_map[current_y][current_x-1]['content'] == '↟ ':
+        near_objects.append(
+            f'Chop tree {game_map[current_y][current_x-1]["content"]}')
+
+
+def get_copy_map_position(current_y, current_x):
+    global game_map_copy
+    return game_map_copy[axis['y']][axis['x']]
 
 
 def move_charapter(key):
+    # UP - DOWN - LEFT - RIGHT
     if key == 72:
-        if axis['y'] - 1 >= 0 and map[axis['y'] - 1][axis['x']]['block'] != True:
-            map[axis['y']][axis['x']] = objects_list[0]
+        if axis['y'] - 1 >= 0 and game_map[axis['y'] - 1][axis['x']]['block'] != True:
+            game_map[axis['y']][axis['x']] = get_copy_map_position(
+                axis['y'], axis['x'])
             axis['y'] = axis['y'] - 1
-            map[axis['y']][axis['x']] = object_charapter
+            game_map[axis['y']][axis['x']] = object_charapter
             has_usable_objects_near(axis['y'], axis['x'])
         else:
             has_usable_objects_near(axis['y'], axis['x'])
     elif key == 80:
-        if axis['y'] + 1 <= axis_limits['y'] and map[axis['y'] + 1][axis['x']]['block'] != True:
-            map[axis['y']][axis['x']] = objects_list[0]
+        if axis['y'] + 1 <= axis_limits['y'] and game_map[axis['y'] + 1][axis['x']]['block'] != True:
+            game_map[axis['y']][axis['x']] = get_copy_map_position(
+                axis['y'], axis['x'])
             axis['y'] = axis['y'] + 1
-            map[axis['y']][axis['x']] = object_charapter
+            game_map[axis['y']][axis['x']] = object_charapter
             has_usable_objects_near(axis['y'], axis['x'])
         else:
             has_usable_objects_near(axis['y'], axis['x'])
     elif key == 75:
-        if axis['x'] - 1 >= 0 and map[axis['y']][axis['x'] - 1]['block'] != True:
-            map[axis['y']][axis['x']] = objects_list[0]
+        if axis['x'] - 1 >= 0 and game_map[axis['y']][axis['x'] - 1]['block'] != True:
+            game_map[axis['y']][axis['x']] = get_copy_map_position(
+                axis['y'], axis['x'])
             axis['x'] = axis['x'] - 1
-            map[axis['y']][axis['x']] = object_charapter
+            game_map[axis['y']][axis['x']] = object_charapter
             has_usable_objects_near(axis['y'], axis['x'])
         else:
             has_usable_objects_near(axis['y'], axis['x'])
     elif key == 77:
-        if axis['x'] + 1 <= axis_limits['x'] and map[axis['y']][axis['x'] + 1]['block'] != True:
-            map[axis['y']][axis['x']] = objects_list[0]
+        if axis['x'] + 1 <= axis_limits['x'] and game_map[axis['y']][axis['x'] + 1]['block'] != True:
+            game_map[axis['y']][axis['x']] = get_copy_map_position(
+                axis['y'], axis['x'])
             axis['x'] = axis['x'] + 1
-            map[axis['y']][axis['x']] = object_charapter
-            has_usable_objects_near(axis['y'],axis['x'])
+            game_map[axis['y']][axis['x']] = object_charapter
+            has_usable_objects_near(axis['y'], axis['x'])
         else:
             has_usable_objects_near(axis['y'], axis['x'])
 
@@ -140,17 +157,17 @@ def get_inputs():
 
 def get_map():
     map_string = ""
-    for column in range(len(map)):
+    for column in range(len(game_map)):
         map_string += "\n"
-        for row in range(len(map[int(column)])):
-            if map[int(column)][int(row)]["content"] == "░ ":
+        for row in range(len(game_map[int(column)])):
+            if game_map[int(column)][int(row)]["content"] == "░ ":
                 map_string += bcolors["OKGREEN"] + \
-                    map[int(column)][int(row)]["content"]+bcolors["ENDC"]
-            elif map[int(column)][int(row)]["content"] == "▓ ":
+                    game_map[int(column)][int(row)]["content"]+bcolors["ENDC"]
+            elif game_map[int(column)][int(row)]["content"] == "▓ ":
                 map_string += bcolors["OKBLUE"] + \
-                    map[int(column)][int(row)]["content"]+bcolors["ENDC"]
+                    game_map[int(column)][int(row)]["content"]+bcolors["ENDC"]
             else:
-                map_string += map[int(column)][int(row)]["content"]
+                map_string += game_map[int(column)][int(row)]["content"]
     return map_string
 
 
@@ -165,8 +182,9 @@ def get_near_objects():
 
 def get_interface():
     print(bcolors["WARNING"]+"Press 'ESC' to exit."+bcolors["ENDC"])
-    print(f'Life {bcolors["FAIL"]+get_life()+bcolors["ENDC"]} Stamina {bcolors["OKBLUE"]+get_stamina()+bcolors["ENDC"]}')
-    print(get_map(),get_near_objects())
+    print(
+        f'Life {bcolors["FAIL"]+get_life()+bcolors["ENDC"]} Stamina {bcolors["OKBLUE"]+get_stamina()+bcolors["ENDC"]}')
+    print(get_map(), get_near_objects())
 
 
 clear()
