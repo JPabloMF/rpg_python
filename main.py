@@ -2,6 +2,8 @@ import random
 import msvcrt
 import os
 import copy
+# from playsound import playsound
+# playsound('forest.wav')
 
 bcolors = {'HEADER': '\033[95m',
            'OKBLUE': '\033[94m',
@@ -12,8 +14,8 @@ bcolors = {'HEADER': '\033[95m',
            'BOLD': '\033[1m',
            'UNDERLINE': '\033[4m'}
 
-axis = {"x": 9, "y": 9}
-axis_limits = {"x": 19, "y": 19}
+axis = {"x": 9, "y": 4}
+axis_limits = {"x": 19, "y": 9}
 
 lives = 3
 stamina = 3
@@ -30,6 +32,8 @@ objects_list = [{"block": False, "grass": True, "content": "░ "},
 
 object_charapter = {"block": False, "content": f"\x1b[0;37;43m▣ \x1b[0m"}
 
+inventory = {"rocks": 0}
+
 
 def clear(): return os.system('cls')
 
@@ -40,9 +44,9 @@ def generate_procedural_map():
     for x in range(axis_limits['y']+1):
         mock_list.append(random.choices(
             objects_list, weights=[15, 8, 1, 1], k=axis_limits['x']+1))
-    mock_list[9][9] = objects_list[0]
+    mock_list[axis['y']][axis['x']] = objects_list[0]
     game_map_copy = copy.deepcopy(mock_list)
-    mock_list[9][9] = object_charapter
+    mock_list[axis['y']][axis['x']] = object_charapter
     game_map = copy.deepcopy(mock_list)
 
 
@@ -60,25 +64,29 @@ def get_stamina():
     return stamina_string
 
 
-def has_usable_objects_near(current_y, current_x):
+# def get_inventory():
+
+
+def handle_detect_object(current_y, current_x, objs):
     global near_objects
     # UP - DOWN - LEFT - RIGHT
     near_objects = []
-    if current_y+1 + 1 <= axis_limits['y'] and game_map[current_y+1][current_x]['content'] == '↟ ':
-        near_objects.append(
-            f'Chop tree {game_map[current_y+1][current_x]["content"]}')
+    for obj in objs:
+        if current_y + 1 <= axis_limits['y'] and (obj in game_map[current_y+1][current_x]['content']) and (obj not in near_objects):
+            near_objects.append(obj)
 
-    if current_y-1 >= 0 and game_map[current_y-1][current_x]['content'] == '↟ ':
-        near_objects.append(
-            f'Chop tree {game_map[current_y-1][current_x]["content"]}')
+        if current_y-1 >= 0 and (obj in game_map[current_y-1][current_x]['content']) and (obj not in near_objects):
+            near_objects.append(obj)
 
-    if current_x+1 + 1 <= axis_limits['x'] and game_map[current_y][current_x+1]['content'] == '↟ ':
-        near_objects.append(
-            f'Chop tree {game_map[current_y][current_x+1]["content"]}')
+        if current_x + 1 <= axis_limits['x'] and (obj in game_map[current_y][current_x+1]['content']) and (obj not in near_objects):
+            near_objects.append(obj)
 
-    if current_x-1 >= 0 and game_map[current_y][current_x-1]['content'] == '↟ ':
-        near_objects.append(
-            f'Chop tree {game_map[current_y][current_x-1]["content"]}')
+        if current_x-1 >= 0 and (obj in game_map[current_y][current_x-1]['content']) and (obj not in near_objects):
+            near_objects.append(obj)
+
+
+def has_usable_objects_near(current_y, current_x):
+    handle_detect_object(current_y, current_x, ["↟", "⎔"])
 
 
 def get_copy_map_position(current_y, current_x):
@@ -127,7 +135,7 @@ def move_charapter(key):
 
 
 def get_key_pressed(key):
-    #UP - DOWN - LEFT - RIGHT
+    #UP - DOWN - LEFT - RIGHT - E - R
     if key == 72:
         clear()
         move_charapter(72)
@@ -144,6 +152,10 @@ def get_key_pressed(key):
         clear()
         move_charapter(77)
         get_interface()
+    elif key == 101:
+        print('E')
+    elif key == 114:
+        print('R')
 
 
 def get_inputs():
@@ -171,12 +183,19 @@ def get_map():
     return map_string
 
 
+def get_near_object_string_iteraction(near_object):
+    if near_object == "↟":
+        return f"Press E to chop a tree {near_object}"
+    elif near_object == "⎔":
+        return f"Press R to mine a rock {near_object}"
+
+
 def get_near_objects():
     global near_objects
-    near_objects_string = ""
+    near_objects_string = "\n"
     for near_object in near_objects:
-        near_objects_string += near_object
-        near_objects_string += "\n"
+        near_objects_string += get_near_object_string_iteraction(near_object)
+        near_objects_string += "    "
     return near_objects_string
 
 
@@ -184,10 +203,13 @@ def get_interface():
     print(bcolors["WARNING"]+"Press 'ESC' to exit."+bcolors["ENDC"])
     print(
         f'Life {bcolors["FAIL"]+get_life()+bcolors["ENDC"]} Stamina {bcolors["OKBLUE"]+get_stamina()+bcolors["ENDC"]}')
-    print(get_map(), get_near_objects())
+    print(get_map())
+    print(get_near_objects())
 
 
 clear()
 generate_procedural_map()
+has_usable_objects_near(axis['y'], axis['x'])
+get_near_objects()
 get_interface()
 get_inputs()
